@@ -1,0 +1,10 @@
+.tab-active {
+            background-color: white;
+            color: #c29a42;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+        }
+        .tab-inactive {
+            background-color: transparent;
+            color: white;
+        }

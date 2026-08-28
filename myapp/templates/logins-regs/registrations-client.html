@@ -1,0 +1,173 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: '#0b1c3a', // Deep navy blue
+                        gold: '#c29a42', // Accent Gold/Amber
+                        cream: '#f8f9fa' // Off-white / soft cream
+                    },
+                    fontFamily: {
+                        serif: ['Georgia', 'serif'], 
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- customs styles -->
+    <link rel="stylesheet" href="{% static 'styles/reg-client.css' %}">
+    <!-- alert -->
+     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-cream min-h-screen flex flex-col justify-center items-center p-4 font-sans text-gray-800">
+
+    <!-- Logo Section -->
+    <div class="mb-6 flex justify-center">
+        <img src="{% static 'images/justice.png' %}" alt="Scales of Justice" class="h-12 w-12 object-contain">
+    </div>
+
+    <!-- Main Card Container -->
+    <div class="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden">
+        
+        <!-- Tab Navigation (Navy Background) -->
+        <div class="flex bg-navy px-2 pt-2">
+            <button id="tab-lawyer" onclick="switchTab('lawyer')" class="w-1/2 py-3 font-serif font-bold text-lg tab-active transition-all duration-300">
+                Volunteer Lawyer
+            </button>
+            <button id="tab-client" onclick="switchTab('client')" class="w-1/2 py-3 font-serif font-bold text-lg tab-inactive transition-all duration-300">
+                Client
+            </button>
+        </div>
+
+        <!-- Form Section -->
+        <div class="p-6 sm:p-8 border-t-0 rounded-b-lg bg-white">
+            
+            <!-- VOLUNTEER LAWYER FORM -->
+            <form id="form-lawyer" method="POST" action="{% url 'reg_clients' %}" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="user_type" value="lawyer">
+                
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Full Name</label>
+                    <input type="text" name="full_name" placeholder="Full Name" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Email</label>
+                    <input type="email" name="email" placeholder="Email" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Phone Number</label>
+                    <input type="tel" name="phone" placeholder="Phone Number" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition">
+                </div>
+
+                <div>
+                    <!-- add more based on speciaty -->
+                    <label class="block text-sm font-semibold mb-1">Specialty</label>
+                    <select name="specialty" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition appearance-none">
+                        <option value="" disabled selected>Select a specialty...</option>
+                        <option value="family">Family Law</option>
+                        <option value="housing">Housing</option>
+                        <option value="employment">Employment Law</option>
+                        <option value="civil_rights">Civil Rights</option>
+                        <option value="criminal">Criminal Defense</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-1/2">
+                        <label class="block text-sm font-semibold mb-1">Password</label>
+                        <input type="password" name="password" placeholder="Password" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition" id="password-lay1">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-sm font-semibold mb-1">Confirm Password</label>
+                        <input type="password" name="confirm_password" placeholder="Confirm Password" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition" id="lawyer-pass1-confirm" oninput="confirmPassword(document.getElementById('password-lay1').value, this.value, this)">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full mt-2 bg-gold hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-200">
+                    Sign Up
+                </button>
+            </form>
+
+            <!-- CLIENT FORM -->
+            <form id="form-client" method="POST" action="{% url 'reg_clients' %}" class="space-y-4 hidden">
+                {% csrf_token %}
+                <input type="hidden" name="user_type" value="client">
+                
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Full Name</label>
+                    <input type="text" name="full_name" placeholder="Full Name" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Email</label>
+                    <input type="email" name="email" placeholder="Email" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Phone Number</label>
+                    <input type="tel" name="phone" placeholder="Phone Number" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition">
+                </div>
+
+                <!-- Client Specific Fields -->
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Street Address <span class="text-gray-400 font-normal">[optional]</span></label>
+                    <input type="text" name="address" placeholder="Street Address" class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-1">State <span class="text-gray-400 font-normal">[optional]</span></label>
+                    <input type="text" name="state" placeholder="State" class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition">
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-1/2">
+                        <label class="block text-sm font-semibold mb-1">Create Password</label>
+                        <input type="password" name="password" placeholder="Password" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition" id="password-cli1">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-sm font-semibold mb-1">Confirm Password</label>
+                        <input type="password" name="confirm_password" placeholder="Confirm Password" required class="w-full border border-gray-300 rounded-md p-2.5 bg-gray-50 focus:ring-1 focus:ring-navy focus:border-navy focus:outline-none transition" oninput="confirmPassword(document.getElementById('password-cli1').value, this.value, this)">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full mt-2 bg-gold hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-200">
+                    Sign Up
+                </button>
+            </form>
+
+            <!-- Shared Footer -->
+            <div class="text-center mt-6 text-sm text-gray-600">
+                Already have an account? <a href="{% url 'login' %}" class="text-gold font-bold hover:underline">Log in</a>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- JavaScript for Tab Switching -->
+   <script src="{% static 'js/reg-client.js' %}"></script>
+{% if messages %}
+<script>
+    {% for message in messages %}
+        Swal.fire({
+            icon: "{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}",
+            title: "{{ message.tags|title }}",
+            text: "{{ message|escapejs }}",
+        });
+    {% endfor %}
+</script>
+{% endif %}
+</body>
+</html>

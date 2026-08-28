@@ -1,0 +1,282 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Legal Aid Portal - Lawyer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: '#0F172A',
+                        navylight: '#1E293B',
+                        gold: '#D97706',
+                        goldHover: '#B45309',
+                        offwhite: '#F8FAFC',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: theme('colors.offwhite'); }
+        .hero-pattern {
+            background-image: radial-gradient(circle at 90% 10%, rgba(217,119,6,0.15) 0%, transparent 40%);
+        }
+    </style>
+</head>
+<body class="text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- NAVBAR -->
+    <nav class="bg-navy px-4 sm:px-6 py-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center flex-wrap">
+            <a href="{% url 'lawyer_dashboard' %}" class="flex items-center space-x-2 cursor-pointer z-50">
+                <div class="w-8 h-8 bg-gold rounded flex items-center justify-center shadow-sm shrink-0">
+                    <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
+                </div>
+                <span class="font-serif text-lg sm:text-xl font-bold tracking-wide text-white whitespace-nowrap">Community <span class="text-gold">Legal</span> Aid</span>
+            </a>
+
+            <button id="mobileMenuBtn" class="md:hidden text-slate-300 hover:text-white focus:outline-none z-50">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path id="menuIcon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+
+            <div id="navMenu" class="hidden w-full md:flex md:w-auto md:items-center mt-4 md:mt-0 basis-full md:basis-auto">
+                <div class="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6 text-slate-200 bg-slate-800 md:bg-transparent p-4 md:p-0 rounded-lg md:rounded-none">
+                    <button type="button" onclick="openProfileModal()" class="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200">
+                        <div class="w-9 h-9 rounded-full overflow-hidden bg-gold/20 border border-gold/40 flex items-center justify-center text-gold font-serif font-bold text-sm shrink-0">
+                            {% if lawyer_profile.avatar %}
+                                <img src="{{ lawyer_profile.avatar.url }}" alt="Profile" class="w-full h-full object-cover">
+                            {% else %}
+                                {{ request.user.first_name|slice:":1"|default:"L" }}
+                            {% endif %}
+                        </div>
+                        <div class="leading-tight text-left">
+                            <span class="text-sm font-medium block">{{ request.user.first_name|default:"Welcome" }}</span>
+                            <span class="text-[11px] text-slate-400">{{ lawyer_profile.get_specialty_display }}</span>
+                        </div>
+                    </button>
+                    <form action="{% url 'logout' %}" method="POST" class="inline m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full md:w-auto text-left text-slate-300 hover:text-gold transition-colors duration-200 flex items-center space-x-2 py-2 md:py-0" title="Logout">
+                            <span class="md:hidden text-sm font-medium">Log out</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- PROFILE MODAL -->
+    <div id="profileModalBackdrop" class="hidden fixed inset-0 bg-navy/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 sm:p-8 relative">
+            <button type="button" onclick="closeProfileModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <h2 class="font-serif text-xl text-navy mb-6">Edit Profile</h2>
+
+            <form action="{% url 'update_profile' %}" method="POST" enctype="multipart/form-data" class="space-y-5">
+                {% csrf_token %}
+
+                <div class="flex flex-col items-center">
+                    <label for="avatarInput" class="cursor-pointer relative group">
+                        <div class="w-20 h-20 rounded-full overflow-hidden bg-gold/20 border-2 border-gold/40 flex items-center justify-center text-gold font-serif font-bold text-2xl">
+                            <img id="avatarPreview" src="{% if lawyer_profile.avatar %}{{ lawyer_profile.avatar.url }}{% endif %}" alt="Profile" class="w-full h-full object-cover {% if not lawyer_profile.avatar %}hidden{% endif %}">
+                            <span id="avatarInitial" class="{% if lawyer_profile.avatar %}hidden{% endif %}">{{ request.user.first_name|slice:":1"|default:"L" }}</span>
+                        </div>
+                        <div class="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                    </label>
+                    <input type="file" name="avatar" id="avatarInput" accept="image/*" class="hidden" onchange="previewAvatar(event)">
+                    <span class="text-xs text-slate-400 mt-2">Click photo to change</span>
+                </div>
+
+                <div class="flex flex-col">
+                    <label for="fullNameInput" class="text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                    <input type="text" name="full_name" id="fullNameInput" value="{{ request.user.first_name }}" required class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white transition">
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-sm font-semibold text-slate-700 mb-2">Specialty</label>
+                    <input type="text" value="{{ lawyer_profile.get_specialty_display }}" disabled class="w-full border border-slate-200 rounded-xl p-3 bg-slate-100 text-slate-400 cursor-not-allowed">
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-sm font-semibold text-slate-700 mb-2">Email</label>
+                    <input type="text" value="{{ request.user.email }}" disabled class="w-full border border-slate-200 rounded-xl p-3 bg-slate-100 text-slate-400 cursor-not-allowed">
+                </div>
+
+                <button type="submit" class="w-full bg-gold hover:bg-goldHover text-white font-medium py-3 rounded-xl shadow-md shadow-gold/20 transition-all duration-200 active:scale-95">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- HERO / WELCOME BANNER -->
+    <div class="bg-navy hero-pattern relative overflow-hidden">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-20 sm:pb-24">
+            <p class="text-gold text-xs sm:text-sm font-semibold tracking-widest uppercase mb-1">Lawyer Dashboard</p>
+            <h1 class="font-serif text-2xl sm:text-3xl text-white mb-2">Welcome back, {{ request.user.first_name|default:"there" }}</h1>
+            <p class="text-slate-400 text-sm sm:text-base max-w-xl">Review open cases below, or check in on the ones you're currently handling.</p>
+        </div>
+    </div>
+
+    <main class="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pb-8 sm:pb-10">
+
+        <!-- QUICK STATS -->
+        <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-10 sm:mb-12 -mt-12 sm:-mt-14 relative z-10">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200/60 px-4 py-4 text-center">
+                <p class="text-xl sm:text-2xl font-serif font-bold text-navy">{{ my_cases|length }}</p>
+                <p class="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide mt-1">My Cases</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200/60 px-4 py-4 text-center">
+                <p class="text-xl sm:text-2xl font-serif font-bold text-amber-600">{{ recommended_cases|length }}</p>
+                <p class="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide mt-1">Recommended</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200/60 px-4 py-4 text-center">
+                <p class="text-xl sm:text-2xl font-serif font-bold text-slate-500">{{ other_open_cases|length }}</p>
+                <p class="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide mt-1">Other Open</p>
+            </div>
+        </div>
+
+        <!-- MY CASES -->
+        <section class="mb-12 sm:mb-14">
+            <h2 class="font-serif text-xl sm:text-2xl text-navy mb-6">My Cases</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                {% for case in my_cases %}
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/60 flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-4 gap-2">
+                        <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">{{ case.get_category_display }}</span>
+                        {% if case.status == 'in_progress' %}
+                            <span class="flex items-center text-[10px] sm:text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span> In Progress
+                            </span>
+                        {% elif case.status == 'resolved' %}
+                            <span class="flex items-center text-[10px] sm:text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span> Resolved
+                            </span>
+                        {% endif %}
+                    </div>
+                    <h3 class="font-serif text-lg sm:text-xl text-navy mb-2 leading-tight">{{ case.title }}</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 mb-2 flex-grow">{{ case.description|truncatewords:18 }}</p>
+                    <p class="text-xs text-slate-400 mb-4">Client: {{ case.client.user.get_full_name }}</p>
+
+                    {% if case.status == 'in_progress' %}
+                    <form action="{% url 'resolve_case' case.id %}" method="POST" class="pt-4 border-t border-slate-100">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2.5 rounded-xl transition-all duration-200">
+                            Mark as Resolved
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="col-span-full bg-white border-2 border-slate-200 border-dashed rounded-2xl p-8 text-center">
+                    <p class="text-slate-500 text-sm">You haven't taken any cases yet. Browse the open cases below.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- RECOMMENDED CASES -->
+        <section class="mb-12 sm:mb-14">
+            <div class="flex items-center gap-2 mb-6">
+                <h2 class="font-serif text-xl sm:text-2xl text-navy">Recommended For You</h2>
+                <span class="text-[10px] sm:text-xs font-semibold text-gold bg-gold/10 px-2.5 py-1 rounded-md border border-gold/30">{{ lawyer_profile.get_specialty_display }}</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                {% for case in recommended_cases %}
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border-2 border-gold/40 flex flex-col h-full relative">
+                    <span class="absolute -top-2.5 right-4 text-[10px] font-bold uppercase tracking-wide bg-gold text-white px-2 py-0.5 rounded-full">Match</span>
+                    <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md w-fit mb-4">{{ case.get_category_display }}</span>
+                    <h3 class="font-serif text-lg sm:text-xl text-navy mb-2 leading-tight">{{ case.title }}</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 mb-4 flex-grow">{{ case.description|truncatewords:18 }}</p>
+                    <p class="text-xs text-slate-400 mb-4">Submitted {{ case.created_at|date:"M d, Y" }}</p>
+
+                    <form action="{% url 'take_case' case.id %}" method="POST" class="pt-4 border-t border-slate-100">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full bg-gold hover:bg-goldHover text-white text-sm font-medium py-2.5 rounded-xl shadow-md shadow-gold/20 transition-all duration-200 active:scale-95">
+                            Take Case
+                        </button>
+                    </form>
+                </div>
+                {% empty %}
+                <div class="col-span-full bg-white border-2 border-slate-200 border-dashed rounded-2xl p-8 text-center">
+                    <p class="text-slate-500 text-sm">No cases matching your specialty right now.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- OTHER OPEN CASES -->
+        <section>
+            <h2 class="font-serif text-xl sm:text-2xl text-navy mb-6">Other Open Cases</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                {% for case in other_open_cases %}
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/60 flex flex-col h-full">
+                    <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md w-fit mb-4">{{ case.get_category_display }}</span>
+                    <h3 class="font-serif text-lg sm:text-xl text-navy mb-2 leading-tight">{{ case.title }}</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 mb-4 flex-grow">{{ case.description|truncatewords:18 }}</p>
+                    <p class="text-xs text-slate-400 mb-4">Submitted {{ case.created_at|date:"M d, Y" }}</p>
+
+                    <form action="{% url 'take_case' case.id %}" method="POST" class="pt-4 border-t border-slate-100">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full bg-navy hover:bg-navylight text-white text-sm font-medium py-2.5 rounded-xl transition-all duration-200 active:scale-95">
+                            Take Case
+                        </button>
+                    </form>
+                </div>
+                {% empty %}
+                <div class="col-span-full bg-white border-2 border-slate-200 border-dashed rounded-2xl p-8 text-center">
+                    <p class="text-slate-500 text-sm">No other open cases at the moment.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            const menu = document.getElementById('navMenu');
+            const icon = document.getElementById('menuIcon');
+            menu.classList.toggle('hidden');
+            icon.setAttribute('d', menu.classList.contains('hidden') ? 'M4 6h16M4 12h16M4 18h16' : 'M6 18L18 6M6 6l12 12');
+        });
+        function openProfileModal() {
+            document.getElementById('profileModalBackdrop').classList.remove('hidden');
+        }
+        function closeProfileModal() {
+            document.getElementById('profileModalBackdrop').classList.add('hidden');
+        }
+        function previewAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('avatarPreview');
+                const initial = document.getElementById('avatarInitial');
+                img.src = e.target.result;
+                img.classList.remove('hidden');
+                initial.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+        document.getElementById('profileModalBackdrop').addEventListener('click', function(e) {
+            if (e.target === this) closeProfileModal();
+        });
+    </script>
+</body>
+</html>

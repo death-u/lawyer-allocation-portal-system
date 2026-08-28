@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: '#0b1c3a', // Deep navy blue
+                        gold: '#c29a42', // Accent Gold/Amber
+                        cream: '#f8f9fa' // Off-white / soft cream
+                    },
+                    fontFamily: {
+                        serif: ['Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-cream min-h-screen flex flex-col justify-center items-center p-4 font-sans text-gray-800">
+
+    <!-- Logo Section -->
+    <div class="mb-6 flex justify-center">
+        <img src="{% static 'images/justice.png' %}" alt="Scales of Justice" class="h-12 w-12 object-contain">
+    </div>
+
+    <!-- Main Login Card -->
+    <div class="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden p-6 sm:p-8">
+        
+        <h2 class="text-2xl font-serif font-bold text-navy text-center mb-6">Welcome Back</h2>
+
+        <!-- Login Form -->
+        <form method="POST" action="" class="space-y-5">
+            {% csrf_token %}
+            
+            <!-- Email Input -->
+            <div>
+                <label class="block text-sm font-semibold mb-1 text-navy">Email Address</label>
+                <input type="email" name="email" placeholder="Enter your email" required class="w-full border border-gray-300 rounded-md p-3 bg-gray-50 focus:ring-2 focus:ring-gold focus:border-gold focus:outline-none transition">
+            </div>
+
+            <!-- Password Input & Forgot Password -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <label class="block text-sm font-semibold text-navy">Password</label>
+                    <!-- Forgot Password Section (Unlinked) -->
+                    <span class="text-xs text-gold font-bold cursor-pointer hover:text-yellow-600 transition">Forgot password?</span>
+                </div>
+                <input type="password" name="password" placeholder="Enter your password" required class="w-full border border-gray-300 rounded-md p-3 bg-gray-50 focus:ring-2 focus:ring-gold focus:border-gold focus:outline-none transition">
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full bg-gold hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-200 mt-2">
+                Sign In
+            </button>
+        </form>
+
+        <!-- Registration Link -->
+        <div class="text-center mt-6 text-sm text-gray-600">
+            Don't have an account? <a href="{% url 'reg_clients' %}" class="text-navy font-bold hover:text-gold transition">Sign up</a>
+        </div>
+        
+    </div>
+
+    <!-- SweetAlert2 Logic for Django Messages -->
+    {% if messages %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                {% for message in messages %}
+                    // Dynamically map Django message tags to SweetAlert icons
+                    let iconType = 'info';
+                    let messageTag = '{{ message.tags }}';
+                    
+                    if (messageTag.includes('error')) {
+                        iconType = 'error';
+                    } else if (messageTag.includes('success')) {
+                        iconType = 'success';
+                    } else if (messageTag.includes('warning')) {
+                        iconType = 'warning';
+                    }
+
+                    // Trigger the alert
+                    Swal.fire({
+                        icon: iconType,
+                        title: iconType.charAt(0).toUpperCase() + iconType.slice(1), // Capitalize first letter
+                        text: "{{ message|escapejs }}", // escapejs prevents quotes in your message from breaking the script
+                        confirmButtonColor: '#0b1c3a', // Custom deep navy button
+                        timer: 4000, // Optional: Auto-closes after 4 seconds
+                        timerProgressBar: true
+                    });
+                {% endfor %}
+            });
+        </script>
+    {% endif %}
+
+</body>
+</html>
